@@ -12,23 +12,30 @@ APP_PADDING = 5
 APP_PRIMARY_COLOR = '#B2DFDB'
 APP_PRIMARY_DARK_COLOR = '#26A69A'
 APP_PRIMARY_LIGHT_COLOR = '#FAFAFA'
+# This is used to save index of notes listbox row + row's note_id
+# Its format is like ('notes_listbox_row_index, note_id)
 LIST_OF_IDS = []
+
+# Used for initializing data.csv
+repo.create_data()
 
 
 def load_lbox_notes_data():
     del LIST_OF_IDS[:]
     lbox_notes.delete(0, tk.END)
     for index, row in repo.get_notes().iterrows():
+        # Inserting the name without first and last character
+        # First and last character in note name repersent double quote
         lbox_notes.insert(index, row['Name'][1:-1])
-        tp = (index, row['Id'])
-        print(tp, type(tp))
-        LIST_OF_IDS.append(tp)
+        LIST_OF_IDS.append((index, row['Id']))
 
 
 def open_note():
     if lbox_notes.curselection():
-        index = lbox_notes.curselection()[0]
-        note = repo.get_notes().iloc[[index]]
+        # First it gets index of selected row
+        # Second finds the tuple in `LIST_OF_IDS` that holds this index
+        # Then gets note id from that tuple's second index
+        note = repo.get_note(LIST_OF_IDS[lbox_notes.curselection()[0]][1])
         rb_value.set(2)
         entry_note_name.delete(0, tk.END)
         entry_note_name.insert(0, note.iloc[0]['Name'])
@@ -50,6 +57,9 @@ def save_note():
             load_lbox_notes_data()
         elif rb == 2:  # Update
             if lbox_notes.curselection():
+                # First it gets index of selected row
+                # Second finds the tuple in `LIST_OF_IDS` that holds this index
+                # Then gets note id from that tuple's second index
                 index = lbox_notes.curselection()[0]
                 note_id = LIST_OF_IDS[index][1]
                 repo.update_note(note_id, note_name, note_content)
@@ -60,6 +70,9 @@ def save_note():
 
 def delete_note():
     if lbox_notes.curselection():
+        # First it gets index of selected row
+        # Second finds the tuple in `LIST_OF_IDS` that holds this index
+        # Then gets note id from that tuple's second index
         index = lbox_notes.curselection()[0]
         note_id = LIST_OF_IDS[index][1]
         repo.remove_note(note_id)
@@ -100,7 +113,7 @@ scroll_notes = tk.Scrollbar(notes_frame, orient=tk.VERTICAL,
 scroll_notes.grid(row=0, column=1, sticky='nes')
 lbox_notes['yscrollcommand'] = scroll_notes.set
 
-# Toolbar
+# Toolbar frame
 toolbar_frame = tk.Frame(main_window, bg=APP_PRIMARY_COLOR)
 toolbar_frame.grid(row=0, column=1, sticky='news')
 toolbar_frame.columnconfigure(0, weight=1)
@@ -115,22 +128,19 @@ btn_open = tk.Button(toolbar_frame, text='Open',
 btn_delete = tk.Button(toolbar_frame, text='Delete',
                        bg=APP_PRIMARY_DARK_COLOR, border=0,
                        command=delete_note)
-# btn_add = tk.Button(toolbar_frame, text='Add',
-#                     bg=APP_PRIMARY_DARK_COLOR, border=0)
 btn_save = tk.Button(toolbar_frame, text='Save',
                      bg=APP_PRIMARY_DARK_COLOR, border=0, command=save_note)
 btn_open.grid(row=0, column=0, sticky='new', padx=2)
 btn_delete.grid(row=0, column=1, sticky='new', padx=2)
-# btn_add.grid(row=0, column=2, sticky='new', padx=2)
 btn_save.grid(row=0, column=2, sticky='new', columnspan=2, padx=2)
 
-# Note name
+# Tollbar note name
 lbl_note_name = tk.Label(toolbar_frame, text='Note Name', bg=APP_PRIMARY_COLOR)
 lbl_note_name.grid(row=1, column=0, pady=5, padx=5, sticky='nes')
 entry_note_name = tk.Entry(toolbar_frame)
 entry_note_name.grid(row=1, column=1, pady=5, sticky='news')
 
-# New Note or Old note
+# Add note or Edit note radiobuttons
 rb_value = tk.IntVar()
 rb_value.set(1)
 radio1 = tk.Radiobutton(
@@ -156,7 +166,7 @@ scroll_content = tk.Scrollbar(content_frame, orient=tk.VERTICAL,
 scroll_content.grid(row=0, column=1, padx=2, sticky='ns')
 entry_note_content['yscrollcommand'] = scroll_content.set
 
-# Search bar - placed in buttom
+# Search bar for searching notes - placed in buttom
 entry_search = tk.Entry(main_window)
 entry_search.grid(row=2, column=1, sticky='new', pady=5, padx=2)
 btn_search = tk.Button(main_window, text='Find',
