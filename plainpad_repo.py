@@ -174,7 +174,7 @@ def update_note(note_id: int, note_name: str, note_content: str) -> bool:
 
         index = get_note_index(note_id)
         notes = get_notes()
-        notes.iloc[index, 1] = note_name
+        notes.iloc[index, 1] = '"{}"'.format(note_name)
         notes.iloc[index, 2] = note_content
         notes.to_csv(DATA_PATH, index=False, columns=COLUMNS)
         return True
